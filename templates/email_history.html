@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Email History - AI Email Composer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header gradient-bg text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="fas fa-history me-2"></i>Email History</h4>
+                <span class="badge bg-light text-dark">{{ history|length }} emails generated</span>
+            </div>
+            <div class="card-body">
+                {% if history %}
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="historySearch" placeholder="Search emails...">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                    
+                    <div class="row" id="historyContainer">
+                        {% for email in history %}
+                        <div class="col-md-6 mb-4 history-item">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ email.name }}</h6>
+                                        <small class="text-muted">{{ email.company }}</small>
+                                    </div>
+                                    <span class="badge bg-{{ 'primary' if email.email_type == 'introduction' else 'success' if email.email_type == 'follow_up' else 'warning' if email.email_type == 'proposal' else 'info' }}">
+                                        {{ email.email_type.title() }}
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ email.subject }}</h6>
+                                    <p class="card-text">
+                                        {{ email.content[:150] }}{% if email.content|length > 150 %}...{% endif %}
+                                    </p>
+                                    {% if email.custom_message %}
+                                        <small class="text-muted">
+                                            <strong>Custom note:</strong> {{ email.custom_message[:100] }}{% if email.custom_message|length > 100 %}...{% endif %}
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer text-muted d-flex justify-content-between align-items-center">
+                                    <small>{{ email.generated_at[:16] }}</small>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewEmail('{{ email.id }}', '{{ email.subject }}', `{{ email.content|replace('`', '\\`')|replace('\\', '\\\\')|replace('\n', '\\n') }}`)">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="copyEmailContent(`{{ email.content|replace('`', '\\`')|replace('\\', '\\\\')|replace('\n', '\\n') }}`)">
+                                            <i class="fas fa-copy"></i> Copy
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Email History</h5>
+                        <p class="text-muted">Generated emails will appear here</p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Generate First Email
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Email View Modal -->
+<div class="modal fade" id="emailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailModalTitle">Email Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="emailModalContent" class="email-preview p-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="copyModalEmail()">
+                    <i class="fas fa-copy me-2"></i>Copy Email
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Search functionality
+document.getElementById('historySearch').addEventListener('keyup', function() {
+    const searchTerm = this.value.toLowerCase();
+    const historyItems = document.querySelectorAll('.history-item');
+    
+    historyItems.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+
+function viewEmail(id, subject, content) {
+    document.getElementById('emailModalTitle').textContent = subject;
+    document.getElementById('emailModalContent').textContent = content;
+    new bootstrap.Modal(document.getElementById('emailModal')).show();
+}
+
+function copyEmailContent(content) {
+    navigator.clipboard.writeText(content).then(function() {
+        // Show success feedback
+        const btn = event.target.closest('button');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-success');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-success');
+        }, 2000);
+    });
+}
+
+function copyModalEmail() {
+    const content = document.getElementById('emailModalContent').textContent;
+    navigator.clipboard.writeText(content).then(function() {
+        const btn = event.target;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-primary');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}

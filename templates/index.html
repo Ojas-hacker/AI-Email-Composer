@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Recipients Management -->
+    <div class="col-md-4">
+        <div class="card card-hover shadow-sm mb-4">
+            <div class="card-header gradient-bg text-white">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Add Recipient</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_recipient') }}">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Company</label>
+                        <input type="text" class="form-control" name="company" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Position</label>
+                        <input type="text" class="form-control" name="position" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Industry</label>
+                        <input type="text" class="form-control" name="industry" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-plus me-2"></i>Add Recipient
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Company Overview -->
+        <div class="card card-hover shadow-sm">
+            <div class="card-header gradient-bg text-white">
+                <h5 class="mb-0"><i class="fas fa-building me-2"></i>Company Overview</h5>
+            </div>
+            <div class="card-body">
+                <h6>{{ company_data.name }}</h6>
+                <p class="text-muted small">{{ company_data.industry }}</p>
+                <p class="small">{{ company_data.mission }}</p>
+                <div class="d-grid">
+                    <a href="{{ url_for('company_data') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit me-1"></i>Edit Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recipients List & Email Composer -->
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header gradient-bg text-white">
+                <h5 class="mb-0"><i class="fas fa-envelope me-2"></i>Email Composer</h5>
+            </div>
+            <div class="card-body">
+                {% if recipients %}
+                    <form id="emailForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Select Recipient</label>
+                                <select class="form-select" name="recipient_id" required>
+                                    <option value="">Choose recipient...</option>
+                                    {% for recipient in recipients %}
+                                        <option value="{{ recipient.id }}">
+                                            {{ recipient.name }} ({{ recipient.company }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email Type</label>
+                                <select class="form-select" name="email_type" required>
+                                    <option value="introduction">Introduction</option>
+                                    <option value="follow_up">Follow-up</option>
+                                    <option value="proposal">Business Proposal</option>
+                                    <option value="newsletter">Newsletter</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Custom Message (Optional)</label>
+                            <textarea class="form-control" name="custom_message" rows="3" 
+                                placeholder="Add any specific points you'd like to include..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success" id="generateBtn">
+                            <i class="fas fa-magic me-2"></i>Generate Email
+                        </button>
+                    </form>
+
+                    <!-- Email Preview -->
+                    <div id="emailPreview" class="mt-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-eye me-2"></i>Generated Email</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="emailContent" class="email-preview p-3"></div>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary" onclick="copyEmail()">
+                                        <i class="fas fa-copy me-2"></i>Copy Email
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Recipients Added</h5>
+                        <p class="text-muted">Add recipients to start composing emails</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recipients Table -->
+        {% if recipients %}
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-list me-2"></i>Recipients ({{ recipients|length }})</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>Position</th>
+                                <th>Added</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for recipient in recipients %}
+                            <tr>
+                                <td>
+                                    <strong>{{ recipient.name }}</strong><br>
+                                    <small class="text-muted">{{ recipient.email }}</small>
+                                </td>
+                                <td>{{ recipient.company }}</td>
+                                <td>{{ recipient.position }}</td>
+                                <td><small>{{ recipient.added_date }}</small></td>
+                                <td>
+                                    <a href="{{ url_for('delete_recipient', recipient_id=recipient.id) }}" 
+                                       class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('Delete this recipient?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('emailForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const generateBtn = document.getElementById('generateBtn');
+    const originalText = generateBtn.innerHTML;
+    
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+    generateBtn.disabled = true;
+    
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch('/compose_email', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            document.getElementById('emailContent').textContent = result.email_content;
+            document.getElementById('emailPreview').style.display = 'block';
+            document.getElementById('emailPreview').scrollIntoView({ behavior: 'smooth' });
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error generating email: ' + error.message);
+    } finally {
+        generateBtn.innerHTML = originalText;
+        generateBtn.disabled = false;
+    }
+});
+
+function copyEmail() {
+    const emailContent = document.getElementById('emailContent').textContent;
+    navigator.clipboard.writeText(emailContent).then(function() {
+        // Show success feedback
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}
