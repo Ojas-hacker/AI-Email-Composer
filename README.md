@@ -28,7 +28,7 @@ AI Email Composer is a powerful web application that leverages Google's Gemini A
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/ai-email-composer.git
+   git clone https://github.com/Ojas-hacker/AI-Email-Composer.git
    cd ai-email-composer
    ```
 
