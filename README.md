@@ -108,4 +108,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-Your Name - [@ojaskawalkar](https://instagram.com/ojaskawalkar) - rjkojas@gmail.com
+Ojas Kawalkar - [@ojaskawalkar](https://instagram.com/ojaskawalkar) - rjkojas@gmail.com
